@@ -3,7 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Crave Kitchen – संपर्क</title>
+<title>क्रेव संपर्क</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#C8102E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="क्रेव संपर्क">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#F2F4F0;--card:#fff;--ink:#14231C;--mute:#5F6F66;--line:#DDE3DC;--red:#C8102E;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
@@ -163,6 +171,7 @@ document.addEventListener("click",e=>{
 $("bk").addEventListener("click",e=>{if(e.target===$("bk"))close()});
 $("q").addEventListener("input",render);
 render();load();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
 </html>
