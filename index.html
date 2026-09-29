@@ -59,9 +59,9 @@ input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);borde
 
 <script>
 const CATS=[["ग्राहक","#C8102E"],["वर्कर","#1B6EF3"],["हेल्पर","#8A5A00"],["डीलर","#6B3FA0"],["सप्लायर","#0E7C66"]];
-const KEY="crave_contacts_v1",URLK="crave_contacts_api";
-let data=[],filter="सभी",api="",status="";
-try{data=JSON.parse(localStorage.getItem(KEY)||"[]");api=localStorage.getItem(URLK)||""}catch(e){}
+const KEY="crave_contacts_v1",URLK="crave_contacts_api",DEFAULT_API="https://script.google.com/macros/s/AKfycbwxkTBq0UohF9xuiONhwg9vb2U5Z_0mK-h_DijlOaIUmKRShOT0YAv_xomvF-EHE02B7g/exec";
+let data=[],filter="सभी",api=DEFAULT_API,status="";
+try{data=JSON.parse(localStorage.getItem(KEY)||"[]");api=localStorage.getItem(URLK)||DEFAULT_API}catch(e){}
 const $=id=>document.getElementById(id);
 const cache=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}};
 const color=c=>(CATS.find(x=>x[0]===c)||[0,"#555"])[1];
