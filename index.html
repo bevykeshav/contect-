@@ -44,6 +44,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);borde
 .save{width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;background:var(--red);color:#fff;font:inherit;font-weight:700}
 .foot{display:flex;gap:10px;justify-content:center;margin:18px 16px 0}
 .foot button{background:none;border:1px solid var(--line);color:var(--mute);padding:8px 14px;border-radius:10px;font:inherit;font-size:14px}
+.cr{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}.dot{width:12px;height:12px;border-radius:50%;flex:none}.cn{flex:1}.cr button{border:1px solid var(--line);background:none;color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit;font-size:14px}.cr .del{color:var(--red)}
 :focus-visible{outline:2px solid var(--red);outline-offset:2px}
 </style>
 </head>
@@ -58,10 +59,13 @@ input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);borde
 <div class="bk" id="bk"><div class="sheet" id="sheet"></div></div>
 
 <script>
-const CATS=[["ग्राहक","#C8102E"],["वर्कर","#1B6EF3"],["हेल्पर","#8A5A00"],["डीलर","#6B3FA0"],["सप्लायर","#0E7C66"]];
+const PAL=["#C8102E","#1B6EF3","#8A5A00","#6B3FA0","#0E7C66","#D6336C","#2B8A3E","#E8590C","#0B7285","#5C3D2E"];
+let CATS=[["ग्राहक",PAL[0]],["वर्कर",PAL[1]],["हेल्पर",PAL[2]],["डीलर",PAL[3]],["सप्लायर",PAL[4]]];
 const KEY="crave_contacts_v1",URLK="crave_contacts_api",DEFAULT_API="https://script.google.com/macros/s/AKfycbwxkTBq0UohF9xuiONhwg9vb2U5Z_0mK-h_DijlOaIUmKRShOT0YAv_xomvF-EHE02B7g/exec";
 let data=[],filter="सभी",api=DEFAULT_API,status="";
 try{data=JSON.parse(localStorage.getItem(KEY)||"[]");api=localStorage.getItem(URLK)||DEFAULT_API}catch(e){}
+try{const c=JSON.parse(localStorage.getItem("crave_cats_v1")||"null");if(Array.isArray(c)&&c.length)CATS=c}catch(e){}
+const cacheCats=()=>{try{localStorage.setItem("crave_cats_v1",JSON.stringify(CATS))}catch(e){}};
 const $=id=>document.getElementById(id);
 const cache=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}};
 const color=c=>(CATS.find(x=>x[0]===c)||[0,"#555"])[1];
@@ -83,14 +87,14 @@ function push(p){
 function load(){
   if(!api){setup();return}
   setStatus("शीट से ला रहे हैं…");
-  jsonp({action:"list"}).then(r=>{if(r&&r.ok){data=r.rows;cache();render();setStatus("शीट से अपडेट")}else setStatus("शीट पढ़ नहीं पाए")})
+  jsonp({action:"list"}).then(r=>{if(r&&r.ok){data=r.rows;if(Array.isArray(r.cats)&&r.cats.length){CATS=r.cats;cacheCats()}cache();render();setStatus("शीट से अपडेट")}else setStatus("शीट पढ़ नहीं पाए")})
    .catch(()=>setStatus("शीट से नहीं जुड़ पाए (पुराने नंबर दिख रहे हैं)"));
 }
 function render(){
   const q=$("q").value.trim().toLowerCase();
   $("chips").innerHTML=["सभी",...CATS.map(c=>c[0])].map(c=>{
     const n=c==="सभी"?data.length:data.filter(d=>d.cat===c).length;
-    return `<button class="chip ${c===filter?"on":""}" data-c="${c}">${c} (${n})</button>`}).join("");
+    return `<button class="chip ${c===filter?"on":""}" data-c="${c}">${c} (${n})</button>`}).join("")+`<button class="chip" id="mc">✏️ प्रकार</button>`;
   const rows=data.filter(d=>(filter==="सभी"||d.cat===filter)&&(!q||d.name.toLowerCase().includes(q)||d.phone.includes(q)))
     .sort((a,b)=>a.name.localeCompare(b.name,"hi"));
   setStatus(status);
@@ -119,9 +123,26 @@ function form(id){
   <label>नोट (चाहें तो)</label><input id="fo" value="${esc(d.note)}">
   <button class="save" id="sv" data-id="${id||""}">सेव करें</button>`);
 }
+function pushCats(extra){cacheCats();if(!api)return;setStatus("शीट में सेव हो रहा है…");
+  jsonp({action:"savecats",cats:JSON.stringify(CATS)}).then(()=>extra?jsonp(extra):0).then(()=>setStatus("शीट में सेव हो गया")).catch(()=>setStatus("इंटरनेट/शीट लिंक की दिक्कत, दोबारा कोशिश करें"))}
+function manage(){open(`<p class="big">संपर्क के प्रकार</p><div>${CATS.map((c,i)=>`<div class="cr"><span class="dot" style="background:${c[1]}"></span><span class="cn">${esc(c[0])} <span class="ph">(${data.filter(d=>d.cat===c[0]).length})</span></span><button data-cr="${i}">नाम बदलें</button><button class="del" data-cd="${i}">हटाएँ</button></div>`).join("")}</div>
+  <label>नया प्रकार जोड़ें</label><input id="nc" placeholder="जैसे: रिश्तेदार">
+  <button class="save" id="ca">+ प्रकार जोड़ें</button><div class="sm" style="margin-top:10px"><button id="cl">बंद करें</button></div>`)}
+function addCat(){const n=$("nc").value.trim();if(!n)return;if(CATS.some(c=>c[0]===n)){alert("यह प्रकार पहले से है");return}
+  const used=CATS.map(c=>c[1]);CATS.push([n,PAL.find(x=>!used.includes(x))||PAL[CATS.length%PAL.length]]);pushCats();render();manage()}
+function renCat(i){const old=CATS[i][0],n=(prompt("नया नाम लिखें",old)||"").trim();if(!n||n===old)return;
+  if(CATS.some(c=>c[0]===n)){alert("यह नाम पहले से है");return}
+  CATS[i][0]=n;data.forEach(d=>{if(d.cat===old)d.cat=n});if(filter===old)filter=n;cache();pushCats({action:"renamecat",from:old,to:n});render();manage()}
+function delCat(i){const c=CATS[i][0];if(CATS.length<2){alert("कम से कम एक प्रकार रहना चाहिए");return}
+  if(data.some(d=>d.cat===c)){alert("\""+c+"\" में अभी संपर्क हैं। पहले उन्हें दूसरे प्रकार में करें, फिर हटाएँ।");return}
+  if(!confirm("\""+c+"\" प्रकार हटा दें?"))return;CATS.splice(i,1);if(filter===c)filter="सभी";pushCats();render();manage()}
 document.addEventListener("click",e=>{
   const t=e.target.closest("button");if(!t)return;
-  if(t.dataset.c){filter=t.dataset.c;render()}
+  if(t.id==="mc")manage();
+  else if(t.id==="ca")addCat();
+  else if(t.dataset.cr!==undefined)renCat(+t.dataset.cr);
+  else if(t.dataset.cd!==undefined)delCat(+t.dataset.cd);
+  else if(t.dataset.c){filter=t.dataset.c;render()}
   else if(t.classList.contains("row"))view(t.dataset.id);
   else if(t.id==="add")form();
   else if(t.id==="cl")close();
